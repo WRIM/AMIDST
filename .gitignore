@@ -13,3 +13,7 @@
 /logs
 /nbproject
 /build
+/AMIDST/nbproject/private/
+/AMIDST/dist/*
+/AMIDST/nbproject/*
+/AMIDST/build/*
