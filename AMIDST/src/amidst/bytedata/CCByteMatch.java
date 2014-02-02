@@ -1,7 +1,5 @@
 package amidst.bytedata;
 
-import amidst.minecraft.Minecraft;
-
 
 public class CCByteMatch extends ClassChecker {
 	private byte[] checkData;
@@ -22,10 +20,5 @@ public class CCByteMatch extends ClassChecker {
 				return false;
 		}
 		return true;
-	}
-	@Override
-	public void check(Minecraft m, ByteClass bClass) {
-		// TODO Auto-generated method stub
-		
 	}
 }

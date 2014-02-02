@@ -1,6 +1,7 @@
 package amidst.version;
 
 import java.io.BufferedReader;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -13,6 +14,7 @@ import java.util.HashMap;
 import com.google.gson.JsonSyntaxException;
 
 import amidst.Util;
+import amidst.json.LauncherProfile;
 import amidst.logging.Log;
 import amidst.resources.ResourceLoader;
 
@@ -31,6 +33,7 @@ public class LatestVersionList {
 	private LoadState loadState = LoadState.IDLE;
 	
 	private VersionList profile;
+	private boolean usingRemoteList = true;
 	
 	private ArrayList<ILatestVersionListListener> loadListeners = new ArrayList<ILatestVersionListListener>();
 	private Object listenerLock = new Object();
@@ -119,6 +122,11 @@ public class LatestVersionList {
 		BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
 		try {
 			profile = Util.readObject(bufferedReader, VersionList.class);
+		} catch (FileNotFoundException e) {
+			Log.w("FileNotFoundException when parsing the version list.");
+			Log.printTraceStack(e);
+			Log.w("Aborting version list load. URL: " + versionUrl);
+			return false;
 		} catch (JsonSyntaxException e) {
 			Log.w("Unable to parse version list.");
 			Log.printTraceStack(e);

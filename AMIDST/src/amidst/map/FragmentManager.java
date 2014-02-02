@@ -1,6 +1,9 @@
 package amidst.map;
 
+import java.io.File;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.Queue;
 import java.util.Stack;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -18,39 +21,29 @@ public class FragmentManager implements Runnable {
 	private ConcurrentLinkedQueue<Fragment> recycleQueue;
 	private int sleepTick = 0;
 	
-	private Object queueLock = new Object();
+	private Stack<Layer> layerList;
 	
-	private Stack<ImageLayer> layerList;
-	
-	private ImageLayer[] imageLayers;
+	private Layer[] layers;
 	private IconLayer[] iconLayers;
-	private LiveLayer[] liveLayers;
+	private Layer[] liveLayers;
 	
-	public FragmentManager(ImageLayer[] imageLayers, LiveLayer[] liveLayers, IconLayer[] iconLayers) {
+	public FragmentManager(Layer[] layers, Layer[] liveLayers, IconLayer[] iconLayers) {
 		fragmentQueue = new ConcurrentLinkedQueue<Fragment>();
 		requestQueue = new ConcurrentLinkedQueue<Fragment>();
 		recycleQueue = new ConcurrentLinkedQueue<Fragment>();
-		layerList = new Stack<ImageLayer>();
-		Collections.addAll(layerList, imageLayers);
+		layerList = new Stack<Layer>();
+		Collections.addAll(layerList, layers);
 		
 		fragmentCache = new Fragment[cacheSize];
-		for (int i = 0; i < imageLayers.length; i++)
-			imageLayers[i].setLayerId(i);
+		
+		Arrays.sort(layers);
 		for (int i = 0; i < cacheSize; i++) {
-			fragmentCache[i] = new Fragment(imageLayers, liveLayers, iconLayers);
+			fragmentCache[i] = new Fragment(layers, liveLayers, iconLayers);
 			fragmentQueue.offer(fragmentCache[i]);
 		}
-		this.imageLayers = imageLayers;
+		this.layers = layers;
 		this.iconLayers = iconLayers;
 		this.liveLayers = liveLayers;
-	}
-	public void updateLayers(float time) {
-		for (ImageLayer layer : imageLayers)
-			layer.update(time);
-		for (LiveLayer layer : liveLayers)
-			layer.update(time);
-		for (IconLayer layer : iconLayers)
-			layer.update(time);
 	}
 	
 	public void reset() {
@@ -77,7 +70,7 @@ public class FragmentManager implements Runnable {
 			fragmentCache[i] = null;
 		}
 		for (int i = cacheSize; i < cacheSize << 1; i++) {
-			newFragments[i] = new Fragment(imageLayers, liveLayers, iconLayers);
+			newFragments[i] = new Fragment(layers, liveLayers, iconLayers);
 			fragmentQueue.offer(newFragments[i]);
 		}
 		fragmentCache = newFragments;
@@ -85,11 +78,8 @@ public class FragmentManager implements Runnable {
 		cacheSize <<= 1;
 		System.gc();
 	}
-	
 	public void repaintFragment(Fragment frag) {
-		synchronized (queueLock) {
-			frag.repaint();
-		}
+		frag.repaint();
 	}
 	public Fragment requestFragment(int x, int y) {
 		if (!running)
@@ -117,27 +107,23 @@ public class FragmentManager implements Runnable {
 		while (running) {
 			if(!requestQueue.isEmpty() || !recycleQueue.isEmpty()) {
 				if (!requestQueue.isEmpty()) {
-					synchronized (queueLock) {
-						Fragment frag = requestQueue.poll();
-						if (frag.isActive && !frag.isLoaded) {
-							frag.load();
-							sleepTick++;
-							if (sleepTick == 10) {
-								sleepTick = 0;
-								try {
-									Thread.sleep(1L);
-								} catch (InterruptedException ignored) {}
-							}
+					Fragment frag = requestQueue.poll();
+					if (frag.isActive && !frag.isLoaded) {
+						frag.load();
+						sleepTick++;
+						if (sleepTick == 10) {
+							sleepTick = 0;
+							try {
+								Thread.sleep(1L);
+							} catch (InterruptedException ignored) {}
 						}
 					}
 				}
 				
 				while (!recycleQueue.isEmpty()) {
-					synchronized (queueLock) {
-						Fragment frag = recycleQueue.poll();
-						frag.recycle();
-						fragmentQueue.offer(frag);
-					}
+					Fragment frag = recycleQueue.poll();
+					frag.recycle();
+					fragmentQueue.offer(frag);
 				}
 			} else {
 				sleepTick = 0;
@@ -150,15 +136,11 @@ public class FragmentManager implements Runnable {
 	}
 	
 	public void setMap(Map map) {
-		for (ImageLayer layer : imageLayers) {
+		for (Layer layer : layers)
 			layer.setMap(map);
-			layer.reload();
-		}
 		
-		for (LiveLayer layer : liveLayers) {
+		for (Layer layer : liveLayers)
 			layer.setMap(map);
-			layer.reload();
-		}
 		
 		for (IconLayer layer : iconLayers) {
 			layer.setMap(map);
@@ -182,10 +164,5 @@ public class FragmentManager implements Runnable {
 	}
 	public int getRequestQueueSize() {
 		return requestQueue.size();
-	}
-	public void repaintFragmentLayer(Fragment frag, int id) {
-		synchronized (queueLock) {
-			frag.repaintImageLayer(id);
-		}
 	}
 }

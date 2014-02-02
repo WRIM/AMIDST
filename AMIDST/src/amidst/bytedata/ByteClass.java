@@ -7,30 +7,9 @@ import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import amidst.logging.Log;
+
 public class ByteClass {
-	public static class AccessFlags {
-		public static int
-			PUBLIC = 0x01,
-			PRIVATE = 0x02,
-			PROTECTED = 0x04,
-			STATIC = 0x08,
-			FINAL = 0x10,
-			VOLATILE = 0x40,
-			TRANSIENT = 0x80;
-	}
-	/*ACC_PUBLIC	 0x0001	 Declared public; may be accessed from outside its package.
-ACC_PRIVATE	 0x0002	 Declared private; usable only within the defining class.
-ACC_PROTECTED	 0x0004	 Declared protected; may be accessed within subclasses.
-ACC_STATIC	 0x0008	 Declared static.
-ACC_FINAL	 0x0010	 Declared final; no further assignment after initialization.
-ACC_VOLATILE	 0x0040	 Declared volatile; cannot be cached.
-ACC_TRANSIENT	 0x0080	 Declared transient; not written or read by a persistent object manager.
-*/
-	public class Field {
-		public int accessFlags;
-		public Field() { }
-	};
-	
 	private byte[] data;
 	private boolean isValidClass;
 	public int minorVersion;
@@ -47,9 +26,6 @@ ACC_TRANSIENT	 0x0080	 Declared transient; not written or read by a persistent o
 	private Vector<String[]> methods, properties, constructors;
 	private Vector<Float> floatConstants;
 	private Vector<Long> longConstants;
-	
-	public Field[] fields;
-	public int methodCount;
 	
 	public ByteClass(String name, byte[] classData) {
 		this.name = name;
@@ -151,11 +127,9 @@ ACC_TRANSIENT	 0x0080	 Declared transient; not written or read by a persistent o
 				stream.skip(iCount*2);
 				
 				//Fields
-				fields = new Field[stream.readUnsignedShort()];
-				for (int i = 0; i < fields.length; i++) {
-					fields[i] = new Field();
-					fields[i].accessFlags = stream.readUnsignedShort();
-					stream.skip(4);
+				int fCount = stream.readUnsignedShort();
+				for (int i = 0; i < fCount; i++) {
+					stream.skip(6);
 					int attributeInfoCount = stream.readUnsignedShort();
 					for (int q = 0; q < attributeInfoCount; q++) {
 						stream.skip(2);
@@ -166,8 +140,8 @@ ACC_TRANSIENT	 0x0080	 Declared transient; not written or read by a persistent o
 				}
 				
 				//Methods
-				methodCount = stream.readUnsignedShort();
-				for (int i = 0; i < methodCount; i++) {
+				int mCount = stream.readUnsignedShort();
+				for (int i = 0; i < mCount; i++) {
 					stream.skip(2);
 					methodIndices.add(new ReferenceIndex(stream.readUnsignedShort(), stream.readUnsignedShort()));
 					int attributeInfoCount = stream.readUnsignedShort();
@@ -202,8 +176,6 @@ ACC_TRANSIENT	 0x0080	 Declared transient; not written or read by a persistent o
 		
 		return data;
 	}
-	
-	@Override
 	public String toString() {
 		return "[ByteClass " + name + "]";
 	}

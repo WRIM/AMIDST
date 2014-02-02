@@ -1,5 +1,7 @@
 package amidst.preferences;
 
+import java.io.IOException;
+import java.util.HashMap;
 import java.util.prefs.Preferences;
 
 import javax.swing.JToggleButton.ToggleButtonModel;

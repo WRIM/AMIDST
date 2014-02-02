@@ -1,12 +1,20 @@
 package amidst.map.layers;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
+
 import MoF.SaveLoader;
 import MoF.SkinManager;
 import amidst.Options;
+import amidst.logging.Log;
 import amidst.map.Fragment;
 import amidst.map.IconLayer;
+import amidst.map.Map;
+import amidst.map.MapObjectNether;
 import amidst.map.MapObjectPlayer;
+import amidst.map.MapObjectStronghold;
+import amidst.map.MapObjectVillage;
 
 public class PlayerLayer extends IconLayer {
 	public SaveLoader saveLoader;
@@ -16,15 +24,9 @@ public class PlayerLayer extends IconLayer {
 		skinManager.start();
 	}
 	public PlayerLayer() {
-		
+		super("players");
+		setVisibilityPref(Options.instance.showPlayers);
 	}
-	
-	@Override
-	public boolean isVisible() {
-		return Options.instance.showPlayers.get();		
-	}
-	
-	@Override
 	public void generateMapObjects(Fragment frag) {
 		if (!isEnabled) return;
 		List<MapObjectPlayer> players =  saveLoader.getPlayers();
@@ -40,7 +42,6 @@ public class PlayerLayer extends IconLayer {
 		}
 	}
 	
-	@Override
 	public void clearMapObjects(Fragment frag) {
 		for (int i = 0; i < frag.objectsLength; i++) {
 			if (frag.objects[i] instanceof MapObjectPlayer)

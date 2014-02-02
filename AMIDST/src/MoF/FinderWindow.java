@@ -2,11 +2,27 @@ package MoF;
 
 
 import amidst.Amidst;
+import amidst.Options;
+import amidst.Util;
 import amidst.gui.menu.AmidstMenu;
+import amidst.logging.Log;
+import amidst.resources.ResourceLoader;
+
 import java.awt.BorderLayout;
 import java.awt.Container;
+import java.awt.Image;
+import java.awt.Point;
 import java.awt.event.*;
+import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.util.prefs.Preferences;
+
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
+import javax.swing.filechooser.FileFilter;
 
 public class FinderWindow extends JFrame {
 	private static final long serialVersionUID = 196896954675968191L;
@@ -19,7 +35,7 @@ public class FinderWindow extends JFrame {
 		//Initialize window
 		super("Amidst v" + Amidst.version());
 		
-		setSize(1000,800);
+		setSize(800,800);
 		//setLookAndFeel();
 		pane = getContentPane();
 		//UI Manager:
@@ -31,7 +47,6 @@ public class FinderWindow extends JFrame {
 		instance = this;
 		
 		addWindowListener(new WindowAdapter() {
-			@Override
 			public void windowClosing(WindowEvent e) {
 				dispose();
 				System.exit(0);

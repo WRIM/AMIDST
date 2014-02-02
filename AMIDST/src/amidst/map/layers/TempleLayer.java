@@ -5,11 +5,17 @@ import java.util.List;
 import java.util.Random;
 
 import amidst.Options;
+import amidst.logging.Log;
 import amidst.map.Fragment;
 import amidst.map.IconLayer;
+import amidst.map.MapObject;
+import amidst.map.MapObjectNether;
+import amidst.map.MapObjectStronghold;
 import amidst.map.MapObjectTemple;
+import amidst.map.MapObjectVillage;
 import amidst.map.MapObjectWitchHut;
 import amidst.minecraft.Biome;
+import amidst.minecraft.Minecraft;
 import amidst.minecraft.MinecraftUtil;
 import amidst.version.VersionInfo;
 
@@ -18,15 +24,11 @@ public class TempleLayer extends IconLayer {
 	private Random random = new Random();
 	
 	public TempleLayer() {
+		super("temples");
+		setVisibilityPref(Options.instance.showTemples);
+		
 		validBiomes = getValidBiomes();
 	}
-	
-	@Override
-	public boolean isVisible() {
-		return Options.instance.showTemples.get();		
-	}
-	
-	@Override
 	public void generateMapObjects(Fragment frag) {
 		int size = Fragment.SIZE >> 4;
 		for (int x = 0; x < size; x++) {
@@ -45,10 +47,18 @@ public class TempleLayer extends IconLayer {
 		}
 	}
 	
+	private MapObject getValidTemple(Fragment frag, int x, int y) {
+		String biomeName = BiomeLayer.getBiomeNameForFragment(frag, x, y);
+		if (biomeName.equals("Swampland"))
+			frag.addObject(new MapObjectWitchHut(x << 4, y << 4).setParent(this));
+		else
+			frag.addObject(new MapObjectTemple(x << 4, y << 4).setParent(this));
+		return null;
+	}
 	public List<Biome> getValidBiomes() {
 		Biome[] validBiomes;
 		
-		if (MinecraftUtil.getVersion().isAtLeast(VersionInfo.V1_4_2)) {
+		if (Minecraft.getActiveMinecraft().version.isAtLeast(VersionInfo.V1_4_2)) {
 			validBiomes = new Biome[] {
 				Biome.desert,
 				Biome.desertHills,
@@ -56,7 +66,7 @@ public class TempleLayer extends IconLayer {
 				Biome.jungleHills,
 				Biome.swampland
 			};
-		} else if (MinecraftUtil.getVersion().isAtLeast(VersionInfo.V12w22a)) {
+		} else if (Minecraft.getActiveMinecraft().version.isAtLeast(VersionInfo.V12w22a)) {
 			validBiomes = new Biome[] {
 				Biome.desert,
 				Biome.desertHills,

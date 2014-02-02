@@ -3,6 +3,7 @@ package amidst.json;
 import java.io.File;
 import java.util.ArrayList;
 
+import amidst.Options;
 import amidst.Util;
 import amidst.logging.Log;
 

@@ -2,7 +2,6 @@ package amidst.map;
 
 import java.awt.AlphaComposite;
 import java.awt.Graphics2D;
-import java.awt.RenderingHints;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 
@@ -11,17 +10,15 @@ import amidst.logging.Log;
 import amidst.minecraft.MinecraftUtil;
 
 public class Fragment {
-	public static final int SIZE = 512, SIZE_SHIFT = 9, MAX_OBJECTS_PER_FRAGMENT = 32, MIPMAP_LEVELS = 3, BIOME_SIZE = SIZE >> 2;
+	public static final int SIZE = 512, SIZE_SHIFT = 9, MAX_OBJECTS_PER_FRAGMENT = 20, MIPMAP_LEVELS = 3, BIOME_SIZE = SIZE >> 2;
 	private static AffineTransform drawMatrix = new AffineTransform();
 	public int blockX, blockY;
 	
 	public short[] biomeData = new short[BIOME_SIZE * BIOME_SIZE];
 	
-	private ImageLayer[] imageLayers;
-	private LiveLayer[] liveLayers;
+	private Layer[] layers;
+	private Layer[] liveLayers;
 	private IconLayer[] iconLayers;
-	
-	private Object loadLock = new Object();
 	
 	private BufferedImage[] images;
 	public MapObject[] objects;
@@ -39,37 +36,41 @@ public class Fragment {
 	
 	private static int[] dataCache = new int[SIZE*SIZE];
 	
-	public Fragment(ImageLayer... layers) {
+	
+	public Fragment(Layer... layers) {
 		this(layers, null, null);
 	}
-	public Fragment(ImageLayer[] imageLayers, LiveLayer[] liveLayers, IconLayer[] iconLayers) {
-		this.imageLayers = imageLayers;
+	public Fragment(Layer[] layers, Layer[] liveLayers, IconLayer[] iconLayers) {
+		this.layers = layers;
 		this.liveLayers = liveLayers;
-		images = new BufferedImage[imageLayers.length];
-		for (int i = 0; i < imageLayers.length; i++)
-			images[imageLayers[i].getLayerId()] = new BufferedImage(imageLayers[i].size, imageLayers[i].size, BufferedImage.TYPE_INT_ARGB);
+		images = new BufferedImage[layers.length];
+		for (int i = 0; i < layers.length; i++)
+			images[i] = new BufferedImage(layers[i].size, layers[i].size, BufferedImage.TYPE_INT_ARGB);
 		this.iconLayers = iconLayers;
 		objects = new MapObject[MAX_OBJECTS_PER_FRAGMENT];
 	}
 	
 	public void load() {
-		synchronized (loadLock) {
-			if (isLoaded)
-				Log.w("This should never happen!");
-			int[] data = MinecraftUtil.getBiomeData(blockX >> 2, blockY >> 2, BIOME_SIZE, BIOME_SIZE);
-			for (int i = 0; i < BIOME_SIZE * BIOME_SIZE; i++)
-				biomeData[i] = (short)data[i];
-			for (int i = 0; i < imageLayers.length; i++)
-				imageLayers[i].load(this);
-			for (int i = 0; i < iconLayers.length; i++)
-				iconLayers[i].generateMapObjects(this);
-			alpha = Options.instance.mapFading.get()?0.0f:1.0f;
-			isLoaded = true;
-		}
+		if (isLoaded)
+			Log.w("This should never happen!");
+		int[] data = MinecraftUtil.getBiomeData(blockX >> 2, blockY >> 2, BIOME_SIZE, BIOME_SIZE);
+		for (int i = 0; i < BIOME_SIZE * BIOME_SIZE; i++)
+			biomeData[i] = (short)data[i];
+		for (int i = 0; i < layers.length; i++)
+			layers[i].load(this, i);
+		for (int i = 0; i < iconLayers.length; i++)
+			iconLayers[i].generateMapObjects(this);
+		alpha = Options.instance.mapFading.get()?0.0f:1.0f;
+		isLoaded = true;
 	}
 	
 	public void recycle() {
-		isActive = false;		
+		isActive = false;
+		if (isLoaded) {
+			for (Layer layer : layers)
+				layer.unload(this);
+		}
+		
 		isLoaded = false;
 	}
 	
@@ -82,39 +83,40 @@ public class Fragment {
 	public void clear() {
 		for (IconLayer layer : iconLayers)
 			layer.clearMapObjects(this);
+		//isLoaded = false;
 		hasNext = false;
 		endOfLine = false;
 		isActive = true;
 	}
-	
-	public void drawLiveLayers(float time, Graphics2D g, AffineTransform mat) {
+	public void drawLive(float time, Graphics2D g, AffineTransform mat) {
 		for (int i = 0; i < liveLayers.length; i++) {
 			if (liveLayers[i].isVisible()) {
-				liveLayers[i].drawLive(this, g, mat);
+				liveLayers[i].drawLive(this, g, liveLayers[i].getMatrix(mat));
 			}
 		}
 		
 	}
-	public void drawImageLayers(float time, Graphics2D g, AffineTransform mat) {
-		if (!isLoaded)
-			return;
-		
-		alpha = Math.min(1.0f, time*3.0f + alpha);
-		for (int i = 0; i < images.length; i++) {
-			if (imageLayers[i].isVisible()) {
-				g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha * imageLayers[i].getAlpha()));
+	public void draw(float time, Graphics2D g, AffineTransform mat) {
+		if (isLoaded) {
+			alpha = Math.min(1.0f, time + alpha);
 
-				
-				// TOOD: FIX THIS
-				g.setTransform(imageLayers[i].getScaledMatrix(mat));
-				if (g.getTransform().getScaleX() < 1.0f)
-					g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-				else
-					g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
-				g.drawImage(images[i], 0, 0, null);
+			if (alpha != 1.0f)
+				g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+			
+			for (int i = 0; i < images.length; i++) {
+				if (layers[i].isVisible()) {
+					//if (layers[i].isTransparent)
+					//	g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, layers[i].getAlpha()));
+					
+					g.setTransform(layers[i].getScaledMatrix(mat));
+					g.drawImage(images[i], 0, 0, null);
+
+					//if (layers[i].isTransparent)
+				}
 			}
 		}
-		g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
+		if (alpha != 1.0f)
+			g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
 	}
 	
 	public void drawObjects(Graphics2D g, AffineTransform inMatrix) {
@@ -144,18 +146,12 @@ public class Fragment {
 	public void addObject(MapObject object) {
 		object.rx = object.x + this.blockX;
 		object.ry = object.y + this.blockY;
-		if (objectsLength >= objects.length) {
-			MapObject[] tempObjects = new MapObject[objects.length << 1];
-			for (int i = 0; i < objects.length; i++)
-				tempObjects[i] = objects[i];
-			objects = tempObjects;
-		}
 		objects[objectsLength] = object;
 		objectsLength++;
 	}
 	
 	public void setImageData(int layerId, int[] data) {
-		images[layerId].setRGB(0, 0, imageLayers[layerId].size, imageLayers[layerId].size, data, 0, imageLayers[layerId].size);
+		images[layerId].setRGB(0, 0, layers[layerId].size, layers[layerId].size, data, 0, layers[layerId].size);
 	}
 	
 	
@@ -219,17 +215,8 @@ public class Fragment {
 		endOfLine = false;
 	}
 	public void repaint() {
-		synchronized (loadLock) {
-			if (isLoaded)
-				for (int i = 0; i < imageLayers.length; i++)
-					imageLayers[i].load(this);
-		}
-	}
-	
-	public void repaintImageLayer(int id) {
-		synchronized (loadLock) {
-			if (isLoaded)
-				imageLayers[id].load(this);
-		}
+		if (isLoaded)
+			for (int i = 0; i < layers.length; i++)
+				layers[i].load(this, i);
 	}
 }

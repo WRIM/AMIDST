@@ -1,6 +1,13 @@
 package amidst.map.layers;
 
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics2D;
 import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.geom.AffineTransform;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Random;
@@ -9,7 +16,9 @@ import amidst.Options;
 import amidst.logging.Log;
 import amidst.map.Fragment;
 import amidst.map.IconLayer;
+import amidst.map.Layer;
 import amidst.map.MapObjectSpawn;
+import amidst.map.MapObjectStronghold;
 import amidst.minecraft.Biome;
 import amidst.minecraft.MinecraftUtil;
 
@@ -26,14 +35,11 @@ public class SpawnLayer extends IconLayer {
 		));
 	
 	public SpawnLayer() {
+		super("spawnPoint");
+		setVisibilityPref(Options.instance.showSpawn);
+		
 	}
 	
-	@Override
-	public boolean isVisible() {
-		return Options.instance.showSpawn.get();		
-	}
-	
-	@Override
 	public void generateMapObjects(Fragment frag) {
 		if ((spawnObject.globalX >= frag.blockX) &&
 			(spawnObject.globalX < frag.blockX + Fragment.SIZE) &&
@@ -59,7 +65,6 @@ public class SpawnLayer extends IconLayer {
 		return new Point(x, y);
 	}
 	
-	@Override
 	public void reload() {
 		Point spawnCenter = getSpawnPosition();
 		spawnObject = new MapObjectSpawn(spawnCenter.x, spawnCenter.y);

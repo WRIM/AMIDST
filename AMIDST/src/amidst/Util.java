@@ -10,9 +10,11 @@ import com.google.gson.JsonSyntaxException;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.net.URL;
 
 public class Util {
 	/** Shows an error message for an exception
@@ -52,9 +54,7 @@ public class Util {
 	public static void setLookAndFeel() {
 		try {
 			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-		} catch (Exception e) {
-			Log.printTraceStack(e);
-		}
+		} catch (Exception ignored) {}
 	}
 	
 	public static File minecraftDirectory;
@@ -63,7 +63,7 @@ public class Util {
 			minecraftDirectory = new File(Options.instance.minecraftPath);
 			if (minecraftDirectory.exists() && minecraftDirectory.isDirectory())
 				return;
-			Log.w("Unable to set Minecraft directory 	 to: " + minecraftDirectory + " as that location does not exist or is not a folder.");
+			Log.w("Unable to set Minecraft directory to: " + minecraftDirectory + " as that location does not exist or is not a folder.");
 		}
 		File mcDir = null;
 		File homeDirectory = new File(System.getProperty("user.home", "."));
@@ -73,9 +73,9 @@ public class Util {
 			File appData = new File(System.getenv("APPDATA"));
 			if (appData.isDirectory())
 				mcDir = new File(appData, ".minecraft");
-		} else if (os.contains("mac")) {
+		} else if (os.contains("mac"))
 			mcDir = new File(homeDirectory, "Library/Application Support/minecraft");
-		}
+		
 		minecraftDirectory = (mcDir != null) ? mcDir : new File(homeDirectory, ".minecraft");
 	}
 	
@@ -115,7 +115,7 @@ public class Util {
 	}
 
 
-	public static <T> T readObject(BufferedReader reader, final Class<T> clazz) throws JsonIOException, JsonSyntaxException {
+	public static <T> T readObject(BufferedReader reader, final Class<T> clazz) throws FileNotFoundException, JsonIOException, JsonSyntaxException {
 		return Amidst.gson.fromJson(reader, clazz);
 	}
 	
@@ -129,19 +129,7 @@ public class Util {
 	public static <T> T readObject(String path, final Class<T> clazz) throws IOException {
 		return readObject(new File(path), clazz);
 	}
-	
-	public static int deselectColor(int color) {
-		int r = (color & 0x00FF0000) >> 16;
-		int g = (color & 0x0000FF00) >> 8;
-		int b = (color & 0x000000FF);
-		
-		int average = (r + g + b);
-		r = (r + average) / 30;
-		g = (g + average) / 30;
-		b = (b + average) / 30;
-		return makeColor(r, g, b);
-	}
-	
+
 	public static int lightenColor(int color, int brightness) {
 		int r = (color & 0x00FF0000) >> 16;
 		int g = (color & 0x0000FF00) >> 8;

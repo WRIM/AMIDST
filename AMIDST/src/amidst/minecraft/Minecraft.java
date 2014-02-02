@@ -2,6 +2,7 @@ package amidst.minecraft;
 
 import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.net.MalformedURLException;
@@ -16,9 +17,9 @@ import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import amidst.Amidst;
 import amidst.Util;
 import amidst.bytedata.ByteClass;
-import amidst.bytedata.ByteClass.AccessFlags;
 import amidst.bytedata.CCLongMatch;
 import amidst.bytedata.CCMethodPreset;
 import amidst.bytedata.CCMulti;
@@ -39,56 +40,47 @@ public class Minecraft {
 	private String versionID; 
 	private URL urlToJar;
 	private File jarFile;
+	private static Minecraft activeMinecraft; 
+	public HashMap<String, MinecraftObject> globalMap = new HashMap<String, MinecraftObject>();
 	
 	private static ClassChecker[] classChecks = new ClassChecker[] {
 			new CCWildcardByteSearch("IntCache", DeobfuscationData.intCache),
+			new CCStringMatch("BiomeGenBase", "MushroomIsland"),
 			new CCStringMatch("WorldType", "default_1_1"),
 			new CCLongMatch("GenLayer", 1000L, 2001L, 2000L),
-			new CCStringMatch("IntCache", ", tcache: "),
-			(new ClassChecker() {
-				@Override
-				public void check(Minecraft m, ByteClass bClass) {
-					if ((bClass.fields.length == 1) && 
-						(bClass.fields[0].accessFlags == (AccessFlags.PRIVATE | AccessFlags.STATIC)) &&
-						(bClass.methodCount == 4)) {
-						m.registerClass("BlockInit", bClass);
-						isComplete = true;
-					}
-				}
-			}),
 			new CCRequire(
-				new CCPropertyPreset(
-					"WorldType",
-					"a", "types",
-					"b", "default",
-					"c", "flat",
-					"d", "largeBiomes",
-					"e", "amplified",
-					"g", "name"
-				)
+					new CCPropertyPreset(
+							"WorldType",
+							"a", "types",
+							"b", "default",
+							"c", "flat",
+							"d", "largeBiomes",
+							"e", "amplified",
+							"g", "name"
+					)
 			, "WorldType"),
 			new CCRequire(
-				new CCMethodPreset(
-					"GenLayer",
-					"a(long, @WorldType)", "initializeAllBiomeGenerators",
-					"a(int, int, int, int)", "getInts"
-				)
+					new CCMethodPreset(
+							"GenLayer",
+							"a(long, @WorldType)", "initializeAllBiomeGenerators",
+							"a(int, int, int, int)", "getInts"
+					)
 			, "GenLayer"),
 			new CCRequire(new CCMulti(
-				new CCMethodPreset(
-					"IntCache",
-					"a(int)", "getIntCache",
-					"a()", "resetIntCache",
-					"b()", "getInformation"
-				),
-				new CCPropertyPreset(
-					"IntCache",
-					"a", "intCacheSize",
-					"b","freeSmallArrays",
-					"c","inUseSmallArrays",
-					"d","freeLargeArrays",
-					"e","inUseLargeArrays"
-				)
+					new CCMethodPreset(
+							"IntCache",
+							"a(int)", "getIntCache",
+							"a()", "resetIntCache",
+							"b()", "getInformation"
+					),
+					new CCPropertyPreset(
+							"IntCache",
+							"a", "intCacheSize",
+							"b","freeSmallArrays",
+							"c","inUseSmallArrays",
+							"d","freeLargeArrays",
+							"e","inUseLargeArrays"
+					)
 			), "IntCache")
 	};
 	private HashMap<String, ByteClass> byteClassMap;
@@ -98,6 +90,10 @@ public class Minecraft {
 	
 	public String versionId;
 	public VersionInfo version = VersionInfo.unknown;
+	
+	/*public Minecraft() throws MalformedURLException {
+		this(Amidst.installInformation.getJarFile());
+	}*/
 	
 	public Minecraft(File jarFile)  throws MalformedURLException {
 		this.jarFile = jarFile;
@@ -127,7 +123,7 @@ public class Minecraft {
 					}
 				}
 			}
-			jar.close();
+
 			Log.i("Jar load complete.");
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -141,6 +137,7 @@ public class Minecraft {
 		while (checksRemaining != 0) {
 			for (int q = 0; q < classChecks.length; q++) {
 				for (int i = 0; i < byteClasses.length; i++) {
+
 					if (!found[q]) {
 						classChecks[q].check(this, (ByteClass)byteClasses[i]);
 						if (classChecks[q].isComplete) {
@@ -166,7 +163,6 @@ public class Minecraft {
 		Log.i("Class search complete.");
 		
 		Log.i("Generating version ID...");
-		use();
 		try {
 			use();
 			if (classLoader.findResource("net/minecraft/client/Minecraft.class") != null)
@@ -187,7 +183,6 @@ public class Minecraft {
 			e.printStackTrace();
 			Log.crash(e, "Unable to find critical external class while loading.\nPlease ensure you have the correct Minecraft libraries installed.");
 		}
-		
 		for (int i = 0; i < fields.length; i++) {
 			String typeString = fields[i].getType().toString();
 			if (typeString.startsWith("class ") && !typeString.contains("."))
@@ -336,6 +331,7 @@ public class Minecraft {
 			classLoader = new URLClassLoader(new URL[] { urlToJar });
 		}
 		Thread.currentThread().setContextClassLoader(classLoader);
+		activeMinecraft = this;
 	}
 	
 	public String getVersionID() {
@@ -371,9 +367,15 @@ public class Minecraft {
 	public ByteClass getByteClass(String name) {
 		return byteClassMap.get(name);
 	}
-	
-	public IMinecraftInterface createInterface() {
-		return new LocalMinecraftInterface(this);
+	public static Minecraft getActiveMinecraft() {
+		return activeMinecraft;
+	}
+
+	public void setGlobal(String name, MinecraftObject object) {
+		globalMap.put(name, object);
+	}
+	public MinecraftObject getGlobal(String name) {
+		return globalMap.get(name);
 	}
 	
 }

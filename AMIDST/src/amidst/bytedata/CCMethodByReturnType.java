@@ -1,5 +1,8 @@
 package amidst.bytedata;
 
+import java.awt.AlphaComposite;
+import java.util.Vector;
+
 import amidst.minecraft.Minecraft;
 
 public class CCMethodByReturnType extends ClassChecker {
@@ -10,7 +13,6 @@ public class CCMethodByReturnType extends ClassChecker {
 		this.param = param;
 		this.returnType = returnType;
 	}
-	@Override
 	public void check(Minecraft mc, ByteClass bClass) {
 		ByteClass clazz = mc.getByteClass(className);
 		String internalName = mc.getByteClass(returnType).getClassName();

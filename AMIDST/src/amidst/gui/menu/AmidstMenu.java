@@ -7,12 +7,13 @@ import amidst.gui.LicenseWindow;
 import amidst.logging.Log;
 import amidst.map.MapObjectPlayer;
 import amidst.map.layers.StrongholdLayer;
-import amidst.minecraft.MinecraftUtil;
+import amidst.minecraft.Minecraft;
 import amidst.preferences.BiomeColorProfile;
 import amidst.preferences.SelectPrefModel.SelectButtonModel;
 import amidst.resources.ResourceLoader;
 
 import javax.swing.*;
+import javax.swing.JToggleButton.ToggleButtonModel;
 import javax.swing.event.AncestorEvent;
 import javax.swing.event.AncestorListener;
 import javax.swing.event.DocumentEvent;
@@ -28,7 +29,10 @@ import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.File;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -69,7 +73,7 @@ public class AmidstMenu extends JMenuBar {
 			}});
 			
 			add(new JMenuItem("Save player locations") {{
-				setEnabled(MinecraftUtil.getVersion().saveEnabled());
+				setEnabled(Minecraft.getActiveMinecraft().version.saveEnabled());
 				setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_DOWN_MASK));
 				addActionListener(new ActionListener() {
 					@Override
@@ -146,7 +150,7 @@ public class AmidstMenu extends JMenuBar {
 						inputInformation.setForeground(Color.red);
 					} else {
 						try {
-							Long.parseLong(text);
+							Long seed = Long.parseLong(text);
 							inputInformation.setText("Seed is valid.");
 							inputInformation.setForeground(Color.gray);
 						} catch (NumberFormatException e) {
@@ -187,7 +191,7 @@ public class AmidstMenu extends JMenuBar {
 								seed = "" + (new Random()).nextLong();
 							if (worldType != null) {
 								window.clearProject();
-								window.setProject(new Project(seed, worldType.getValue()));
+								window.setProject(new Project(seed, worldType));
 							}
 						}
 					}
@@ -216,7 +220,7 @@ public class AmidstMenu extends JMenuBar {
 							//If a string was returned, say so.
 							if (worldType != null) {
 								window.clearProject();
-								window.setProject(new Project(seed, worldType.getValue()));
+								window.setProject(new Project(seed, worldType));
 							}
 						}
 					
@@ -464,7 +468,6 @@ public class AmidstMenu extends JMenuBar {
 				reloadMenuItem = new JMenuItem("Reload Menu");
 				final BiomeColorMenu biomeColorMenu = this;
 				reloadMenuItem.addActionListener(new ActionListener() {
-					@Override
 					public void actionPerformed(ActionEvent arg) {
 						profileCheckboxes.clear();
 						Log.i("Reloading additional biome color profiles.");

@@ -3,6 +3,8 @@ package MoF;
 import amidst.Options;
 import amidst.logging.Log;
 import amidst.map.MapObject;
+import amidst.map.MapObjectPlayer;
+import amidst.minecraft.Minecraft;
 import amidst.minecraft.MinecraftUtil;
 
 import java.awt.BorderLayout;
@@ -11,6 +13,8 @@ import java.awt.event.KeyListener;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.sql.Timestamp;
@@ -38,22 +42,22 @@ public class Project extends JPanel {
 	}
 	
 	public Project(long seed) {
-		this(seed, SaveLoader.Type.DEFAULT.getName());
+		this(seed, SaveLoader.Type.DEFAULT);
 	}
 	
 	public Project(SaveLoader file) {
-		this(file.seed, SaveLoader.genType.getName(), file);
+		this(file.seed, SaveLoader.genType, file);
 		
 		Google.track("seed/file/" + Options.instance.seed);
 	}
 	
-	public Project(String seed, String type) {
+	public Project(String seed, SaveLoader.Type type) {
 		this(stringToLong(seed), type);
 		
 		Google.track("seed/" + seed + "/" + Options.instance.seed);
 	}
 	
-	public Project(long seed, String type) {
+	public Project(long seed, SaveLoader.Type type) {
 		this(seed, type, null);
 	}
 	
@@ -94,8 +98,9 @@ public class Project extends JPanel {
 		
 	}
 	
-	public Project(long seed, String type, SaveLoader saveLoader) {
+	public Project(long seed, SaveLoader.Type type, SaveLoader saveLoader) {
 		logSeedHistory(seed);
+		SaveLoader.genType = type;
 		saveLoaded = !(saveLoader == null);
 		save = saveLoader;
 		//Enter seed data:
@@ -103,7 +108,7 @@ public class Project extends JPanel {
 		
 		BorderLayout layout = new BorderLayout();
 		this.setLayout(layout);
-		MinecraftUtil.createWorld(seed, type);
+		MinecraftUtil.createBiomeGenerator(seed, type);
 		//Create MapViewer
 		map = new MapViewer(this);
 		add(map, BorderLayout.CENTER);

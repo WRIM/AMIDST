@@ -8,7 +8,6 @@ public class CCRequireFinal extends CCRequireSimple {
 		super(checker);
 	}
 
-	@Override
 	public boolean canPass(Minecraft mc, ByteClass bClass) {
 		return bClass.isFinal();
 	}

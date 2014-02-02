@@ -1,6 +1,8 @@
 package amidst.minecraft;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
+import java.net.URLClassLoader;
 import java.util.HashMap;
 
 

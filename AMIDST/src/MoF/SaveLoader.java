@@ -2,10 +2,15 @@ package MoF;
 import amidst.Util;
 import amidst.logging.Log;
 import amidst.map.MapObjectPlayer;
+import amidst.minecraft.Minecraft;
+import amidst.minecraft.MinecraftObject;
+
 import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
 import javax.swing.filechooser.FileFilter;
 
 import org.jnbt.CompoundTag;
@@ -36,8 +41,8 @@ public class SaveLoader {
 			return name;
 		}
 		
-		public String getValue() {
-			return value;
+		public MinecraftObject get() {
+			return (MinecraftObject) Minecraft.getActiveMinecraft().getClassByName("WorldType").getValue(value);
 		}
 		
 		public static Type fromMixedCase(String name) {

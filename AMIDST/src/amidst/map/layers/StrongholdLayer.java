@@ -7,10 +7,15 @@ import java.util.List;
 import java.util.Random;
 
 import amidst.Options;
+import amidst.logging.Log;
 import amidst.map.Fragment;
 import amidst.map.IconLayer;
+import amidst.map.MapObjectNether;
 import amidst.map.MapObjectStronghold;
+import amidst.map.MapObjectVillage;
 import amidst.minecraft.Biome;
+import amidst.minecraft.Minecraft;
+import amidst.minecraft.MinecraftObject;
 import amidst.minecraft.MinecraftUtil;
 import amidst.version.VersionInfo;
 
@@ -62,15 +67,12 @@ public class StrongholdLayer extends IconLayer {
 	private MapObjectStronghold[] strongholds = new MapObjectStronghold[3];
 	
 	public StrongholdLayer() {
+		super("strongholds");
 		instance = this;
+		setVisibilityPref(Options.instance.showStrongholds);
+		
 	}
 	
-	@Override
-	public boolean isVisible() {
-		return Options.instance.showStrongholds.get();		
-	}
-	
-	@Override
 	public void generateMapObjects(Fragment frag) {
 		int size = Fragment.SIZE >> 4;
 		for (int x = 0; x < size; x++) {
@@ -92,16 +94,16 @@ public class StrongholdLayer extends IconLayer {
 		
 		// TODO: Replace this system!
 		Biome[] validBiomes = biomesDefault;
-		if (MinecraftUtil.getVersion() == VersionInfo.V1_9pre6 || MinecraftUtil.getVersion() == VersionInfo.V1_0)
+		if (Minecraft.getActiveMinecraft().version == VersionInfo.V1_9pre6 || Minecraft.getActiveMinecraft().version == VersionInfo.V1_0)
 			validBiomes = biomes1_0;
-		if (MinecraftUtil.getVersion() == VersionInfo.V1_1)
+		if (Minecraft.getActiveMinecraft().version == VersionInfo.V1_1)
 			validBiomes = biomes1_1;
-		if (MinecraftUtil.getVersion().isAtLeast(VersionInfo.V12w03a))
+		if (Minecraft.getActiveMinecraft().version.isAtLeast(VersionInfo.V12w03a))
 			validBiomes = biomes12w03a;
 
 		List<Biome> biomeArrayList = Arrays.asList(validBiomes);
 		
-		if (MinecraftUtil.getVersion().isAtLeast(VersionInfo.V13w36a)) {
+		if (Minecraft.getActiveMinecraft().version.isAtLeast(VersionInfo.V13w36a)) {
 			biomeArrayList = new ArrayList<Biome>();
 			for (int i = 0; i < Biome.biomes.length; i++) {
 				if ((Biome.biomes[i] != null) && (Biome.biomes[i].type.value1 > 0f)) {
@@ -142,7 +144,6 @@ public class StrongholdLayer extends IconLayer {
 		return strongholds;
 	}
 	
-	@Override
 	public void reload() {
 		findStrongholds();
 	}

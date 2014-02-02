@@ -5,8 +5,10 @@ import java.util.List;
 import java.util.Random;
 
 import amidst.Options;
+import amidst.logging.Log;
 import amidst.map.Fragment;
 import amidst.map.IconLayer;
+import amidst.map.MapObjectNether;
 import amidst.map.MapObjectVillage;
 import amidst.minecraft.Biome;
 import amidst.minecraft.MinecraftUtil;
@@ -16,14 +18,9 @@ public class VillageLayer extends IconLayer {
 	private Random random = new Random();
 	
 	public VillageLayer() {
+		super("villages");
+		setVisibilityPref(Options.instance.showVillages);
 	}
-	
-	@Override
-	public boolean isVisible() {
-		return Options.instance.showVillages.get();		
-	}
-	
-	@Override
 	public void generateMapObjects(Fragment frag) {
 		int size = Fragment.SIZE >> 4;
 		for (int x = 0; x < size; x++) {

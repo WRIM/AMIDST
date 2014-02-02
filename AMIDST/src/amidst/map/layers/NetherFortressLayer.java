@@ -10,13 +10,9 @@ public class NetherFortressLayer extends IconLayer {
 	private Random random = new Random();
 	
 	public NetherFortressLayer() {
+		super("netherfortress");
+		setVisibilityPref(Options.instance.showNetherFortresses);
 	}
-	
-	@Override
-	public boolean isVisible() {
-		return Options.instance.showNetherFortresses.get();
-	}
-	@Override
 	public void generateMapObjects(Fragment frag) {
 		int size = Fragment.SIZE >> 4;
 		for (int x = 0; x < size; x++) {
@@ -35,7 +31,7 @@ public class NetherFortressLayer extends IconLayer {
 		int i = chunkX >> 4;
 		int j = chunkY >> 4;
 
-		random.setSeed(i ^ j << 4 ^ Options.instance.seed);
+		random.setSeed((long)(i ^ j << 4) ^ Options.instance.seed);
 		random.nextInt();
 
 		if (random.nextInt(3) != 0) {

@@ -1,5 +1,7 @@
 package amidst.bytedata;
 
+import java.io.UnsupportedEncodingException;
+
 import amidst.minecraft.Minecraft;
 
 
@@ -9,7 +11,6 @@ public class CCStringMatch extends ClassChecker {
 		super(name);
 		checkData = data;
 	}
-	@Override
 	public void check(Minecraft m, ByteClass bClass) {
 		if (bClass.searchForString(checkData)) {
 			m.registerClass(publicName, bClass);

@@ -3,7 +3,7 @@ package amidst.bytedata;
 import amidst.minecraft.Minecraft;
 
 
-public abstract class ClassChecker {
+public class ClassChecker {
 	protected String publicName;
 	public boolean isComplete;
 	public int passes = 10;
@@ -13,8 +13,9 @@ public abstract class ClassChecker {
 	public ClassChecker(String publicName) {
 		this.publicName = publicName;
 	}
-	public abstract void check(Minecraft m, ByteClass bClass);
-	
+	public void check(Minecraft m, ByteClass bClass) {
+		isComplete = true;
+	}
 	public String getName() {
 		return publicName;
 	}

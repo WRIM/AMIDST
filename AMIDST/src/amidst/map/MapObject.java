@@ -2,7 +2,8 @@ package amidst.map;
 import amidst.Options;
 import amidst.map.MapMarkers;
 
-import java.awt.Point;
+import javax.swing.*;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 
 public class MapObject extends Point {
@@ -21,6 +22,7 @@ public class MapObject extends Point {
 	public String getName() {
 		return type.toString();
 	}
+	
 	
 	public int getWidth() {
 		return (int)(type.image.getWidth() * localScale);

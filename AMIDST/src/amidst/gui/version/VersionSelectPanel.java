@@ -1,6 +1,8 @@
 package amidst.gui.version;
 
 import java.awt.Color;
+import java.awt.Container;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
@@ -11,8 +13,12 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.ArrayList;
+import java.util.HashMap;
+
 import javax.swing.JPanel;
 
+import amidst.logging.Log;
+import amidst.version.MinecraftProfile.Status;
 import net.miginfocom.swing.MigLayout;
 
 public class VersionSelectPanel extends JPanel implements MouseListener, KeyListener {
@@ -22,7 +28,7 @@ public class VersionSelectPanel extends JPanel implements MouseListener, KeyList
 	private Font emptyMessageFont = new Font("arial", Font.BOLD, 30);
 	private boolean isLoading = false;
 	
-	private ArrayList<VersionComponent> components = new ArrayList<VersionComponent>();
+	private ArrayList<VersionComponent> componentMap = new ArrayList<VersionComponent>();
 	private VersionComponent selected = null;
 	private int selectedIndex = -1;
 	
@@ -36,7 +42,7 @@ public class VersionSelectPanel extends JPanel implements MouseListener, KeyList
 	
 	public void addVersion(VersionComponent version) {
 		add(version, "growx, pushx, wrap");
-		components.add(version);
+		componentMap.add(version);
 	}
 	
 	@Override
@@ -44,7 +50,7 @@ public class VersionSelectPanel extends JPanel implements MouseListener, KeyList
 		super.paintChildren(g);
 		Graphics2D g2d = (Graphics2D)g;
 		g2d.setColor(Color.gray);
-		for (int i = 1; i <= components.size(); i++) {
+		for (int i = 1; i <= componentMap.size(); i++) {
 			g2d.drawLine(0, i * 40, getWidth(), i * 40);
 		}
 	}
@@ -60,7 +66,7 @@ public class VersionSelectPanel extends JPanel implements MouseListener, KeyList
 		g.setColor(Color.white);
 		g.fillRect(0, 0, getWidth(), getHeight());
 		
-		if (components.size() == 0) {
+		if (componentMap.size() == 0) {
 			g.setColor(Color.gray);
 			g.setFont(emptyMessageFont);
 			g.drawString(emptyMessage, (getWidth() >> 1) - (emptyMessageWidth >> 1), 30);
@@ -74,24 +80,6 @@ public class VersionSelectPanel extends JPanel implements MouseListener, KeyList
 			emptyMessageWidth = emptyMessageMetric.stringWidth(emptyMessage);
 	}
 	
-	public void select(String name) {
-		for (int i = 0; i < components.size(); i++) {
-			if (components.get(i).getVersionName().equals(name)) {
-				select(i);
-				break;
-			}
-		}
-	}
-	
-	public void select(VersionComponent component) {
-		for (int i = 0; i < components.size(); i++) {
-			if (components.get(i) == component) {
-				select(i);
-				break;
-			}
-		}
-	}
-	
 	public void select(int index) {
 		if (selected != null) {
 			selected.setSelected(false);
@@ -100,8 +88,8 @@ public class VersionSelectPanel extends JPanel implements MouseListener, KeyList
 		
 		selected = null;
 		
-		if (index < components.size()) {
-			selected = components.get(index);
+		if (index < componentMap.size()) {
+			selected = componentMap.get(index);
 			selected.setSelected(true);
 			selected.repaint();
 			selectedIndex = index;
@@ -109,7 +97,7 @@ public class VersionSelectPanel extends JPanel implements MouseListener, KeyList
 	}
 	
 	private void loadSelectedProfile() {
-		if ((selected == null) || !selected.isReadyToLoad())
+		if ((selected == null) || (selected.getProfile().getStatus() != Status.FOUND))
 			return;
 		isLoading = true;
 		selected.load();
@@ -146,7 +134,7 @@ public class VersionSelectPanel extends JPanel implements MouseListener, KeyList
 		int key = event.getKeyCode();
 		switch (key) {
 			case KeyEvent.VK_DOWN:
-				if (selectedIndex < components.size() - 1)
+				if (selectedIndex < componentMap.size() - 1)
 					select(selectedIndex + 1);
 				break;
 			case KeyEvent.VK_UP:

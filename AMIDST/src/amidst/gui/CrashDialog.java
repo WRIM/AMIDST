@@ -10,13 +10,15 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
-import javax.swing.ScrollPaneConstants;
 import javax.swing.border.LineBorder;
 
 import amidst.logging.LogRecorder;
+
 import net.miginfocom.swing.MigLayout;
 
 public class CrashDialog extends JFrame {
+	private static final long serialVersionUID = 2016466949762866300L;
+
 	public CrashDialog(String message) {
 		super("AMIDST encountered an unexpected error.");
 		Container contentPane = getContentPane();
@@ -28,7 +30,7 @@ public class CrashDialog extends JFrame {
 		JTextArea logText = new JTextArea(LogRecorder.getContents());
 
 		JScrollPane scrollPane = new JScrollPane(logText);
-		scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+		scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 		
 		logText.setFont(new Font("arial", Font.PLAIN, 10));
 		scrollPane.setBorder(new LineBorder(Color.darkGray, 1));
@@ -39,8 +41,8 @@ public class CrashDialog extends JFrame {
 		setVisible(true);
 		
 		addWindowListener(new WindowAdapter() {
-			@Override
-			public void windowClosing(WindowEvent e) {
+			public void windowClosing(WindowEvent e)
+			{
 				dispose();
 				System.exit(4);
 			}
